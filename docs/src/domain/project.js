@@ -66,7 +66,7 @@ export function updateProject(existing, updates, now = new Date().toISOString())
     url: normalizeUrl(updates.url ?? existing.url),
     para: normalizePara(updates.para ?? existing.para),
     tags: normalizeTags(updates.tags ?? existing.tags),
-    note: String(updates.note ?? existing.note || "").trim(),
+    note: String((updates.note ?? existing.note) || "").trim(),
     updatedAt: now,
   };
 }

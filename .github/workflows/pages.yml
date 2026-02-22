@@ -27,6 +27,9 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Build main
+        run: bash scripts/build-main.sh
+
       - name: Build preview
         run: bash scripts/build-preview.sh
 

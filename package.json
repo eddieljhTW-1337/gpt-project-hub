@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "sync": "./scripts/sync-docs.sh",
+    "build:main": "./scripts/build-main.sh",
     "build:preview": "./scripts/build-preview.sh"
   },
   "devDependencies": {
