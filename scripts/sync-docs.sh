@@ -12,6 +12,7 @@ cp -R "$ROOT_DIR/src" "$ROOT_DIR/docs/"
 # Fix module path for GitHub Pages
 if [ -f "$ROOT_DIR/docs/index.html" ]; then
   perl -0pi -e 's|<script type="module" src="\.\./src/main\.js"></script>|<script type="module" src="./src/main.js"></script>|g' "$ROOT_DIR/docs/index.html"
+  perl -0pi -e 's|<script nomodule src="\.\./src/bundle\.js"></script>|<script nomodule src="./src/bundle.js"></script>|g' "$ROOT_DIR/docs/index.html"
 fi
 
 printf "Synced docs/ from public/ and src/\n"
