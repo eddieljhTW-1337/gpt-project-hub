@@ -9,12 +9,25 @@
     return bar;
   }
 
+  function getErrorMessage(error) {
+    if (!error) {
+      return "Unknown error";
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    if (error.message) {
+      return error.message;
+    }
+    return String(error);
+  }
+
   function showFatalError(error) {
     const banner = document.createElement("div");
     banner.setAttribute("role", "alert");
     banner.style.cssText =
       "position:sticky;top:0;z-index:9999;background:#3c0d0d;color:#fff;padding:12px 16px;font:14px/1.4 system-ui;border-bottom:2px solid #ffb3b3";
-    banner.textContent = `App failed to start: ${error?.message || error}`;
+    banner.textContent = `App failed to start: ${getErrorMessage(error)}`;
     document.body.prepend(banner);
   }
 
