@@ -24,6 +24,12 @@ jobs:
       - name: Sync docs
         run: bash scripts/sync-docs.sh
 
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build preview
+        run: npm run build:preview
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
