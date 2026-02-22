@@ -103,9 +103,18 @@
       </section>
     </div>
 
-    <script src="../src/bundle.js"></script>
+    <div
+      id="js-flag"
+      style="font:12px/1.4 system-ui;opacity:0.6;padding:8px 12px;"
+    >
+      JS OFF
+    </div>
+    <script>
+      document.getElementById("js-flag").textContent = "JS ON";
+    </script>
+    <script src="../src/bundle.js?v=761eba3"></script>
     <div style="font:12px/1.4 system-ui;opacity:0.6;padding:8px 12px;">
-      Build f237bcc
+      Build 761eba3
     </div>
   </body>
 </html>
