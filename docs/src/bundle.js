@@ -1,11 +1,14 @@
 (() => {
+  if (typeof window !== "undefined") {
+    window.__bundleLoaded = true;
+  }
   function createStatusBar() {
     const bar = document.createElement("div");
     bar.setAttribute("role", "status");
     bar.style.cssText =
       "position:sticky;top:0;z-index:9999;background:#0b2f2a;color:#e8fff6;padding:8px 12px;font:12px/1.4 system-ui;border-bottom:2px solid #2bd4a7";
     bar.textContent = "Loading app...";
-    document.body.prepend(bar);
+    document.body.insertBefore(bar, document.body.firstChild);
     return bar;
   }
 
@@ -28,7 +31,7 @@
     banner.style.cssText =
       "position:sticky;top:0;z-index:9999;background:#3c0d0d;color:#fff;padding:12px 16px;font:14px/1.4 system-ui;border-bottom:2px solid #ffb3b3";
     banner.textContent = `App failed to start: ${getErrorMessage(error)}`;
-    document.body.prepend(banner);
+    document.body.insertBefore(banner, document.body.firstChild);
   }
 
   function testStorage(storage) {

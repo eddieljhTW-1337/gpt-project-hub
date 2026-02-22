@@ -112,9 +112,26 @@
     <script>
       document.getElementById("js-flag").textContent = "JS ON";
     </script>
+    <script>
+      (function () {
+        var warn = document.createElement("div");
+        warn.id = "bundle-warning";
+        warn.style.cssText =
+          "position:sticky;top:0;z-index:9999;background:#5b4300;color:#fff;padding:8px 12px;font:12px/1.4 system-ui;border-bottom:2px solid #ffd666";
+        warn.textContent = "bundle.js not loaded yet...";
+        warn.hidden = true;
+        document.body.insertBefore(warn, document.body.firstChild);
+        setTimeout(function () {
+          if (!window.__bundleLoaded) {
+            warn.hidden = false;
+            warn.textContent = "bundle.js did not run";
+          }
+        }, 1500);
+      })();
+    </script>
     <script src="../src/bundle.js?v=761eba3"></script>
     <div style="font:12px/1.4 system-ui;opacity:0.6;padding:8px 12px;">
-      Build 761eba3
+      Build 761eba3-debug
     </div>
   </body>
 </html>
