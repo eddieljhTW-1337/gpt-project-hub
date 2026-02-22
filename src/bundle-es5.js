@@ -1,0 +1,549 @@
+(function () {
+  if (typeof window !== "undefined") {
+    window.__bundleLoaded = true;
+  }
+
+  function createStatusBar() {
+    var bar = document.createElement("div");
+    bar.setAttribute("role", "status");
+    bar.style.cssText =
+      "position:sticky;top:0;z-index:9999;background:#0b2f2a;color:#e8fff6;padding:8px 12px;font:12px/1.4 system-ui;border-bottom:2px solid #2bd4a7";
+    bar.textContent = "Loading app...";
+    document.body.insertBefore(bar, document.body.firstChild);
+    return bar;
+  }
+
+  function getErrorMessage(error) {
+    if (!error) {
+      return "Unknown error";
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    if (error.message) {
+      return error.message;
+    }
+    try {
+      return String(error);
+    } catch (_err) {
+      return "Unknown error";
+    }
+  }
+
+  function showFatalError(error) {
+    var banner = document.createElement("div");
+    banner.setAttribute("role", "alert");
+    banner.style.cssText =
+      "position:sticky;top:0;z-index:9999;background:#3c0d0d;color:#fff;padding:12px 16px;font:14px/1.4 system-ui;border-bottom:2px solid #ffb3b3";
+    banner.textContent = "App failed to start: " + getErrorMessage(error);
+    document.body.insertBefore(banner, document.body.firstChild);
+  }
+
+  function testStorage(storage) {
+    if (!storage) {
+      return false;
+    }
+    var key = "__ph_test__";
+    try {
+      storage.setItem(key, "1");
+      storage.removeItem(key);
+      return true;
+    } catch (_err) {
+      return false;
+    }
+  }
+
+  var STORAGE_KEY = "projectHub.projects.v1";
+  var PARA_OPTIONS = ["Projects", "Areas", "Resources", "Archives"];
+
+  function safeParse(value) {
+    try {
+      return JSON.parse(value);
+    } catch (_err) {
+      return [];
+    }
+  }
+
+  function createLocalStorageRepo(storage) {
+    function load() {
+      if (!storage) {
+        return [];
+      }
+      var raw = storage.getItem(STORAGE_KEY);
+      if (!raw) {
+        return [];
+      }
+      var parsed = safeParse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    }
+
+    function persist(items) {
+      if (!storage) {
+        return;
+      }
+      storage.setItem(STORAGE_KEY, JSON.stringify(items));
+    }
+
+    function list() {
+      return load();
+    }
+
+    function get(id) {
+      var items = load();
+      for (var i = 0; i < items.length; i += 1) {
+        if (items[i].id === id) {
+          return items[i];
+        }
+      }
+      return null;
+    }
+
+    function save(project) {
+      var items = load();
+      var index = -1;
+      for (var i = 0; i < items.length; i += 1) {
+        if (items[i].id === project.id) {
+          index = i;
+          break;
+        }
+      }
+      if (index >= 0) {
+        items[index] = project;
+      } else {
+        items.push(project);
+      }
+      persist(items);
+    }
+
+    function remove(id) {
+      var items = load();
+      var filtered = [];
+      for (var i = 0; i < items.length; i += 1) {
+        if (items[i].id !== id) {
+          filtered.push(items[i]);
+        }
+      }
+      persist(filtered);
+    }
+
+    return {
+      list: list,
+      get: get,
+      save: save,
+      remove: remove,
+    };
+  }
+
+  function createId() {
+    if (typeof crypto !== "undefined" && crypto.randomUUID) {
+      return crypto.randomUUID();
+    }
+    return String(Date.now()) + "-" + Math.random().toString(16).slice(2);
+  }
+
+  function normalizePara(value) {
+    for (var i = 0; i < PARA_OPTIONS.length; i += 1) {
+      if (PARA_OPTIONS[i] === value) {
+        return value;
+      }
+    }
+    return "Projects";
+  }
+
+  function normalizeTags(tags) {
+    var input;
+    if (Array.isArray(tags)) {
+      input = tags;
+    } else {
+      input = String(tags || "").split(",");
+    }
+    var cleaned = [];
+    for (var i = 0; i < input.length; i += 1) {
+      var tag = String(input[i] || "").trim();
+      if (tag.length > 0) {
+        cleaned.push(tag.toLowerCase());
+      }
+    }
+    var unique = [];
+    for (var j = 0; j < cleaned.length; j += 1) {
+      if (unique.indexOf(cleaned[j]) === -1) {
+        unique.push(cleaned[j]);
+      }
+    }
+    return unique;
+  }
+
+  function normalizeUrl(value) {
+    var trimmed = String(value || "").trim();
+    if (!trimmed) {
+      throw new Error("URL is required");
+    }
+
+    var normalized = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : "https://" + trimmed;
+    try {
+      new URL(normalized);
+    } catch (_err) {
+      throw new Error("URL is invalid");
+    }
+    return normalized;
+  }
+
+  function validateTitle(value) {
+    var title = String(value || "").trim();
+    if (!title) {
+      throw new Error("Title is required");
+    }
+    return title;
+  }
+
+  function createProject(input, now) {
+    var timestamp = now || new Date().toISOString();
+    return {
+      id: input.id || createId(),
+      title: validateTitle(input.title),
+      url: normalizeUrl(input.url),
+      para: normalizePara(input.para),
+      tags: normalizeTags(input.tags),
+      note: String(input.note || "").trim(),
+      createdAt: input.createdAt || timestamp,
+      updatedAt: timestamp,
+    };
+  }
+
+  function updateProject(existing, updates, now) {
+    var timestamp = now || new Date().toISOString();
+    return {
+      id: existing.id,
+      title: validateTitle(
+        typeof updates.title !== "undefined" ? updates.title : existing.title
+      ),
+      url: normalizeUrl(
+        typeof updates.url !== "undefined" ? updates.url : existing.url
+      ),
+      para: normalizePara(
+        typeof updates.para !== "undefined" ? updates.para : existing.para
+      ),
+      tags: normalizeTags(
+        typeof updates.tags !== "undefined" ? updates.tags : existing.tags
+      ),
+      note: String(
+        typeof updates.note !== "undefined" ? updates.note : existing.note || ""
+      ).trim(),
+      createdAt: existing.createdAt,
+      updatedAt: timestamp,
+    };
+  }
+
+  function listProjects(repo) {
+    return repo.list();
+  }
+
+  function upsertProject(repo, input) {
+    if (input.id) {
+      var existing = repo.get(input.id);
+      if (existing) {
+        var updated = updateProject(existing, input);
+        repo.save(updated);
+        return updated;
+      }
+    }
+
+    var created = createProject(input);
+    repo.save(created);
+    return created;
+  }
+
+  function deleteProject(repo, id) {
+    repo.remove(id);
+  }
+
+  function filterProjects(projects, filters) {
+    var query = String(filters.query || "").trim().toLowerCase();
+    var para = filters.para || "All";
+    var tag = String(filters.tag || "").trim().toLowerCase();
+
+    var results = [];
+    for (var i = 0; i < projects.length; i += 1) {
+      var project = projects[i];
+      var matchesPara = para === "All" || project.para === para;
+      var matchesTag = !tag || project.tags.indexOf(tag) >= 0;
+
+      if (!query) {
+        if (matchesPara && matchesTag) {
+          results.push(project);
+        }
+        continue;
+      }
+
+      var haystack = [
+        project.title,
+        project.note,
+        project.url,
+        project.para,
+      ]
+        .concat(project.tags || [])
+        .join(" ")
+        .toLowerCase();
+
+      if (matchesPara && matchesTag && haystack.indexOf(query) >= 0) {
+        results.push(project);
+      }
+    }
+    return results;
+  }
+
+  function sortProjects(projects, sortKey) {
+    var sorted = projects.slice();
+    if (sortKey === "title-asc") {
+      sorted.sort(function (a, b) {
+        return a.title.localeCompare(b.title);
+      });
+      return sorted;
+    }
+
+    sorted.sort(function (a, b) {
+      return b.updatedAt.localeCompare(a.updatedAt);
+    });
+    return sorted;
+  }
+
+  function createTagElement(tag) {
+    var span = document.createElement("span");
+    span.className = "tag";
+    span.textContent = tag;
+    return span;
+  }
+
+  function createActionButton(label, action) {
+    var button = document.createElement("button");
+    button.type = "button";
+    button.textContent = label;
+    button.dataset.action = action;
+    return button;
+  }
+
+  function renderProjectList(container, projects) {
+    container.innerHTML = "";
+
+    for (var i = 0; i < projects.length; i += 1) {
+      var project = projects[i];
+      var card = document.createElement("article");
+      card.className = "card";
+      card.dataset.id = project.id;
+
+      var header = document.createElement("div");
+      header.className = "card-header";
+
+      var titleWrap = document.createElement("div");
+
+      var title = document.createElement("h3");
+      title.className = "card-title";
+      title.textContent = project.title;
+
+      var meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = project.para;
+
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(meta);
+
+      var actions = document.createElement("div");
+      actions.className = "card-actions";
+      actions.appendChild(createActionButton("Open", "open"));
+      actions.appendChild(createActionButton("Edit", "edit"));
+      actions.appendChild(createActionButton("Delete", "delete"));
+
+      header.appendChild(titleWrap);
+      header.appendChild(actions);
+
+      var tags = document.createElement("div");
+      tags.className = "tags";
+      if (project.tags && project.tags.length > 0) {
+        for (var t = 0; t < project.tags.length; t += 1) {
+          tags.appendChild(createTagElement(project.tags[t]));
+        }
+      }
+
+      var note = document.createElement("p");
+      note.textContent = project.note || "";
+
+      card.appendChild(header);
+      if (project.tags && project.tags.length > 0) {
+        card.appendChild(tags);
+      }
+      if (project.note) {
+        card.appendChild(note);
+      }
+
+      container.appendChild(card);
+    }
+  }
+
+  function renderEmptyState(emptyState, isEmpty) {
+    emptyState.style.display = isEmpty ? "block" : "none";
+  }
+
+  function initApp(repo, root) {
+    var form = root.querySelector("#project-form");
+    var projectId = root.querySelector("#project-id");
+    var titleInput = root.querySelector("#title");
+    var urlInput = root.querySelector("#url");
+    var paraInput = root.querySelector("#para");
+    var tagsInput = root.querySelector("#tags");
+    var noteInput = root.querySelector("#note");
+    var clearButton = root.querySelector("#clear-btn");
+
+    var searchInput = root.querySelector("#search");
+    var filterPara = root.querySelector("#filter-para");
+    var filterTag = root.querySelector("#filter-tag");
+    var sortSelect = root.querySelector("#sort");
+
+    var listContainer = root.querySelector("#project-list");
+    var emptyState = root.querySelector("#empty-state");
+    var countBadge = root.querySelector("#count");
+
+    var currentProjects = [];
+
+    function resetForm() {
+      projectId.value = "";
+      form.reset();
+    }
+
+    function refresh() {
+      currentProjects = listProjects(repo);
+
+      var filtered = filterProjects(currentProjects, {
+        query: searchInput.value,
+        para: filterPara.value,
+        tag: filterTag.value,
+      });
+
+      var sorted = sortProjects(filtered, sortSelect.value);
+
+      renderProjectList(listContainer, sorted);
+      renderEmptyState(emptyState, sorted.length === 0);
+      countBadge.textContent = String(sorted.length);
+      if (typeof window !== "undefined" && window.__appStatus) {
+        window.__appStatus("Loaded " + sorted.length + " project(s)." );
+      }
+    }
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      try {
+        upsertProject(repo, {
+          id: projectId.value || undefined,
+          title: titleInput.value,
+          url: urlInput.value,
+          para: paraInput.value,
+          tags: tagsInput.value,
+          note: noteInput.value,
+        });
+        if (typeof window !== "undefined" && window.__appStatus) {
+          window.__appStatus("Project saved.");
+        }
+        resetForm();
+        refresh();
+      } catch (error) {
+        alert(error.message || "Failed to save project");
+      }
+    });
+
+    clearButton.addEventListener("click", function () {
+      resetForm();
+    });
+
+    var filterElements = [searchInput, filterPara, filterTag, sortSelect];
+    for (var i = 0; i < filterElements.length; i += 1) {
+      filterElements[i].addEventListener("input", refresh);
+      filterElements[i].addEventListener("change", refresh);
+    }
+
+    listContainer.addEventListener("click", function (event) {
+      var button = event.target.closest("button");
+      if (!button) {
+        return;
+      }
+      var card = button.closest(".card");
+      if (!card) {
+        return;
+      }
+      var id = card.dataset.id;
+      var project = null;
+      for (var i = 0; i < currentProjects.length; i += 1) {
+        if (currentProjects[i].id === id) {
+          project = currentProjects[i];
+          break;
+        }
+      }
+      if (!project) {
+        return;
+      }
+
+      var action = button.dataset.action;
+      if (action === "open") {
+        window.location.href = project.url;
+        return;
+      }
+
+      if (action === "edit") {
+        projectId.value = project.id;
+        titleInput.value = project.title;
+        urlInput.value = project.url;
+        paraInput.value = project.para;
+        tagsInput.value = project.tags.join(", ");
+        noteInput.value = project.note || "";
+        return;
+      }
+
+      if (action === "delete") {
+        var confirmDelete = window.confirm("Delete this project?");
+        if (!confirmDelete) {
+          return;
+        }
+        deleteProject(repo, project.id);
+        refresh();
+      }
+    });
+
+    refresh();
+  }
+
+  function startApp() {
+    try {
+      var statusBar = createStatusBar();
+      window.__appStatus = function (message) {
+        statusBar.textContent = message;
+      };
+
+      var storageReady = testStorage(window.localStorage);
+      window.__appStatus(
+        storageReady ? "Storage OK. Starting..." : "Storage unavailable. Starting..."
+      );
+
+      var repo = createLocalStorageRepo(window.localStorage);
+      initApp(repo, document);
+      document.documentElement.dataset.jsReady = "true";
+      window.__appStatus("App ready.");
+    } catch (error) {
+      showFatalError(error);
+    }
+  }
+
+  window.addEventListener("error", function (event) {
+    showFatalError(event.error || event.message);
+  });
+
+  window.addEventListener("unhandledrejection", function (event) {
+    showFatalError(event.reason);
+  });
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", startApp);
+  } else {
+    startApp();
+  }
+})();

@@ -11,7 +11,7 @@ cp -R "$ROOT_DIR/src" "$ROOT_DIR/docs/"
 
 # Fix module path for GitHub Pages
 if [ -f "$ROOT_DIR/docs/index.html" ]; then
-  perl -0pi -e 's|<script type="module" src="\.\./src/main\.js"></script>|<script src="./src/bundle.js?v=761eba3"></script>|g' "$ROOT_DIR/docs/index.html"
+  perl -0pi -e 's|<script type="module" src="\.\./src/main\.js"></script>|<script src="./src/bundle-es5.js?v=es5"></script>|g' "$ROOT_DIR/docs/index.html"
   perl -0pi -e 's|<script nomodule src="\.\./src/bundle\.js"></script>||g' "$ROOT_DIR/docs/index.html"
 fi
 
