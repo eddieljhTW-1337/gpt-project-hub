@@ -47,6 +47,9 @@ export function initApp({ repo, root }) {
     renderProjectList(listContainer, sorted);
     renderEmptyState(emptyState, sorted.length === 0);
     countBadge.textContent = String(sorted.length);
+    if (typeof window !== "undefined" && window.__appStatus) {
+      window.__appStatus(`Loaded ${sorted.length} project(s).`);
+    }
   }
 
   form.addEventListener("submit", (event) => {
@@ -61,6 +64,9 @@ export function initApp({ repo, root }) {
         tags: tagsInput.value,
         note: noteInput.value,
       });
+      if (typeof window !== "undefined" && window.__appStatus) {
+        window.__appStatus("Project saved.");
+      }
       resetForm();
       refresh();
     } catch (error) {
