@@ -1,0 +1,7 @@
+{
+  "name": "gpt-project-hub",
+  "private": true,
+  "scripts": {
+    "sync": "./scripts/sync-docs.sh"
+  }
+}

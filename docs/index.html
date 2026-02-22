@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Project Hub" />
+    <title>Project Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Project Hub</p>
+          <h1>Quickly enter your ChatGPT projects</h1>
+          <p class="subhead">PARA + tags, designed for fast recall.</p>
+        </div>
+      </header>
+
+      <section class="panel">
+        <div class="panel-row">
+          <div class="field">
+            <label for="search">Search</label>
+            <input id="search" type="search" placeholder="Title, tag, note..." />
+          </div>
+          <div class="field">
+            <label for="filter-para">PARA</label>
+            <select id="filter-para">
+              <option value="All">All</option>
+              <option value="Projects">Projects</option>
+              <option value="Areas">Areas</option>
+              <option value="Resources">Resources</option>
+              <option value="Archives">Archives</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="filter-tag">Tag</label>
+            <input id="filter-tag" type="text" placeholder="e.g. medical" />
+          </div>
+          <div class="field">
+            <label for="sort">Sort</label>
+            <select id="sort">
+              <option value="updated-desc">Recently updated</option>
+              <option value="title-asc">Title A → Z</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <form id="project-form" class="form">
+          <input id="project-id" type="hidden" />
+          <div class="panel-row">
+            <div class="field">
+              <label for="title">Title *</label>
+              <input id="title" type="text" required placeholder="Project name" />
+            </div>
+            <div class="field">
+              <label for="url">URL *</label>
+              <input id="url" type="url" required placeholder="https://chatgpt.com/project/..." />
+            </div>
+          </div>
+          <div class="panel-row">
+            <div class="field">
+              <label for="para">PARA *</label>
+              <select id="para">
+                <option value="Projects">Projects</option>
+                <option value="Areas">Areas</option>
+                <option value="Resources">Resources</option>
+                <option value="Archives">Archives</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="tags">Tags</label>
+              <input id="tags" type="text" placeholder="medical, coding" />
+            </div>
+          </div>
+          <div class="field">
+            <label for="note">Note</label>
+            <textarea id="note" rows="2" placeholder="Short reminder"></textarea>
+          </div>
+          <div class="actions">
+            <button type="submit" class="primary">Save</button>
+            <button type="button" id="clear-btn" class="ghost">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header">
+          <h2>Your projects</h2>
+          <span id="count" class="count">0</span>
+        </div>
+        <div id="empty-state" class="empty">No projects yet. Add your first one above.</div>
+        <div id="project-list" class="grid"></div>
+      </section>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

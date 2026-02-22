@@ -18,6 +18,16 @@ http://localhost:8000/public/
 
 3. Add it to your iPhone Home Screen if desired (Share → Add to Home Screen).
 
+## GitHub Pages
+
+This repo is ready for GitHub Pages using the `/docs` folder. In GitHub:
+
+1. Settings → Pages
+2. Source: `Deploy from a branch`
+3. Branch: `main` / Folder: `/docs`
+
+After saving, the site will be available at your GitHub Pages URL.
+
 ## Architecture
 
 - `src/domain`: core data structure and validation
